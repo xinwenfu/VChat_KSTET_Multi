@@ -147,11 +147,11 @@ SPIKE is a C based fuzzing tool that is commonly used by professionals, it is av
 	<img src="Images/I4c.png" width=600>
 
 	* We can further see that VChat crashes once it receives sixty `A`s
-7. We can see at the bottom of *Immunity Debugger* that VChat crashed due to a memory access violation. This means we likely overwrote the return address stored on the stack, leading to the EIP being loaded with an invalid address, this error could have also been caused if we overwrote a local pointer that is then dereferenced... However, we know from previous exploits on VChat this is unlikely.
+7. We can see at the bottom of *Immunity Debugger* that VChat crashed due to a memory access violation. This means we likely overwrote the return address stored on the stack, leading to the EIP being loaded with an invalid address or overwrote a SEH frame. This error could have also been caused if we overwrote a local pointer that is then dereferenced... However, we know from previous exploits on VChat this is unlikely.
 
 	<img src="Images/I4d.png" width=600>
 
-8. We can also look at the comparison of the Register values before and after the fuzzing in Immunity Debugger 
+8. We can look at the comparison of the Register values before and after the fuzzing in Immunity Debugger, here we can see the EIP has been overwritten. This means we overwrote the return address on the stack! 
 	* Before 
 
 		<img src="Images/I7.png" width=600>
@@ -161,7 +161,7 @@ SPIKE is a C based fuzzing tool that is commonly used by professionals, it is av
 		<img src="Images/I8.png" width=600>
 
       * The best way to reproduce this is to use [exploit0.py](./SourceCode/exploit0.py).
-9. We can examine the messages SPIKE is sending by examining the [tcpdump](https://www.tcpdump.org/) or [wireshark](https://www.wireshark.org/docs/wsug_html/) output.
+9. We can examine the messages SPIKE was sending by examining the [tcpdump](https://www.tcpdump.org/) or [wireshark](https://www.wireshark.org/docs/wsug_html/) output.
 
 	<img src="Images/I5.png" width=800> 
 
@@ -246,7 +246,7 @@ Now that we have all the necessary parts for the creation of a exploit we will d
 ### Exploitation
 
 #### Stack Space 
-1. We know from one of our previous runs of `mona.py` (`!mona findmsp`) that we have a very limited amount of space following the overwritten return address we use in the *EIP* register. As we have done in previous exploits we will preform a short relative jump to the start of the buffer so we can use the sixty six bytes that precede our return address.
+1. We know from one of our previous runs of `mona.py` (`!mona findmsp`) that we have a very limited amount of space following the overwritten return address we use in the *EIP* register. As we have done in previous exploits we will preform a short relative jump to the start of the buffer so we can use the sixty six bytes that precede our return address for our first stage shell code.
 
    1. Set a breakpoint at the `JMP ESP` instruction as we did in the previous section
 
