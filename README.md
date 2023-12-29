@@ -3,10 +3,10 @@
 *Notice*: The following exploit, and its procedures are based on the original [Blog](https://fluidattacks.com/blog/vulnserver-kstet/)
 ___
 <!-- MITRE link's topic may be slightly differnt -->
-This exploit will explore the use of [Multi-Stage Exploits](https://attack.mitre.org/techniques/T1104/) where in this case the first stage will provide install access and a jumping off point to the later stages. That is our first stage will be injected using the initial vulnerability in the software; in this case the VChat server. Once this initial stage has been deployed we can use it, either as an access point to deploy additional shellcode as we do here, or in a more complex scenarios to download and deploy more complex malware onto a target system through this new channel.
+This exploit will use the technique of [Multi-Stage Exploits](https://attack.mitre.org/techniques/T1104/) where in this case the first stage provides install access and a jumping off point that the later stages use to gain more access to the underlying system. That is our first stage will be injected using a initial vulnerability in the software; in this case the VChat server. Once this initial stage has been deployed we can use it, either as an access point to deploy the final shellcode as we do here, or in a more complex scenarios this may be one of many stages used to download and deploy more complex malware onto a target system through this new channel.
 
 <!-- Reword and Verify -->
-This is particularly useful in environment with constraints and limited resources related to the application or service that is being exploited. This also in some cases allows attacker to gain further access into a system from say a phishing attack which deploys malicious applications, or injects shellcode into a process to deploy a second stage allowing for greater access to the system.
+This is particularly useful in environments with constraints and limited resources available the the attacker within the application or service that is being attacked. This also in some cases allows attacker to gain further access into a system from say a phishing attack which first deploys a malicious applications, or injects shellcode into a process that later deploys a second stage allowing for greater access to the system.
 
 ## Exploitation
 ### PreExploitation
@@ -218,8 +218,7 @@ SPIKE is a C based fuzzing tool that is commonly used by professionals, it is av
       * We can see there are nine possible `jmp esp` instructions in the essefunc dll that we can use, any should work. We will use the last one `0x625014E6`
 8. Use a program like [exploit3.py](./SourceCode/exploit3.py) to verify that this works.
 
-	![GIF Example](Videos/Exploit3.gif)
-
+	<img src="Videos/Exploit3.gif" width=600>
 
    1. Click on the black button highlighted below, enter in the address we decided in the previous step
 
@@ -289,7 +288,7 @@ Now that we have all the necessary parts for the creation of a exploit we will d
 	```
 3. Restart the VChat server, and set a breakpoint at the `JMP ESP` instruction, run the [exploit4.py](./SourceCode/exploit4.py) program and ensure that it works!
 
-	![GIF Example](Videos/Exploit4.gif)
+	<img src="Videos/Exploit4.gif" width=600>
 
 #### Shell Code Generation
 Due to the limited space on the stack we have to work with (66 bytes) we will be using the techniques discussed in the [Code Reuse](https://github.com/DaintyJet/VChat_GTER_CodeReuse). Where we will reuse the code from libraries that have already be loaded by our target *VChat*. As this is a TCP server, it should have the necessary programs loaded for us.  
@@ -309,7 +308,7 @@ Due to the limited space on the stack we have to work with (66 bytes) we will be
 	* `flags`: Flags used to control the behavior of the function
 2. Now to go about finding some of the information needed for our exploit we can do the following.
 
-	![GIF Example](Videos/FindRECVCall.gif)
+	<img src="Videos/FindRECVCall.gif" width=600>
 
 	1. Right click the CPU Window, and select *Search For* and then *All Intermodular Calls*.
 
@@ -321,7 +320,7 @@ Due to the limited space on the stack we have to work with (66 bytes) we will be
 
 3. Once we have the call Instruction Located, we can jump to it, and set a breakpoint. This way we can extract the Address of the `recv(...)` call. Alternatively we could use the [Arwin](https://github.com/xinwenfu/arwin) program to do this.
 
-	![GIF Example](Videos/FindRECV.gif)
+	<img src="Videos/FindRECV.gif" width=600>
 
 	1. Goto the Call Address  
 
@@ -395,7 +394,7 @@ Due to the limited space on the stack we have to work with (66 bytes) we will be
 #### Staging
 1. Now we can add our first stage shell code to the [exploit5.py](./SourceCode/exploit5.py), we can then set a breakpoint at the `jmp esp` instruction we chose earlier and ensure that it works properly!
 
-	![GIF Example](Videos/Exploit5.gif)
+	<img src="Videos/Exploit5.gif" width=600>
 
 	1. Set a breakpoint at the `jmp esp` instruction 
 
