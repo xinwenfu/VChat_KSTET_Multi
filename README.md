@@ -217,8 +217,8 @@ SPIKE is a C based fuzzing tool that is commonly used by professionals, it is av
 
       * We can see there are nine possible `jmp esp` instructions in the essefunc dll that we can use, any should work. We will use the last one `0x625014E6`
 8. Use a program like [exploit3.py](./SourceCode/exploit3.py) to verify that this works.
-
-	<img src="Videos/Exploit3.gif" width=600>
+	
+	https://github.com/DaintyJet/VChat_KSTET_Multi/assets/60448620/1a188006-7304-4b1a-bc47-b651c4c8767b
 
    1. Click on the black button highlighted below, enter in the address we decided in the previous step
 
@@ -287,8 +287,8 @@ Now that we have all the necessary parts for the creation of a exploit we will d
 	)
 	```
 3. Restart the VChat server, and set a breakpoint at the `JMP ESP` instruction, run the [exploit4.py](./SourceCode/exploit4.py) program and ensure that it works!
-
-	<img src="Videos/Exploit4.gif" width=600>
+	
+	https://github.com/DaintyJet/VChat_KSTET_Multi/assets/60448620/682ab5be-aa3d-47f0-a26a-a107011919a1
 
 #### Shell Code Generation
 Due to the limited space on the stack we have to work with (66 bytes) we will be using the techniques discussed in the [Code Reuse](https://github.com/DaintyJet/VChat_GTER_CodeReuse). Where we will reuse the code from libraries that have already be loaded by our target *VChat*. As this is a TCP server, it should have the necessary programs loaded for us.  
@@ -308,7 +308,7 @@ Due to the limited space on the stack we have to work with (66 bytes) we will be
 	* `flags`: Flags used to control the behavior of the function
 2. Now to go about finding some of the information needed for our exploit we can do the following.
 
-	<img src="Videos/FindRECVCall.gif" width=600>
+	https://github.com/DaintyJet/VChat_KSTET_Multi/assets/60448620/6ba1aa4f-35a1-49c4-8c06-fe3740fc98df
 
 	1. Right click the CPU Window, and select *Search For* and then *All Intermodular Calls*.
 
@@ -320,7 +320,7 @@ Due to the limited space on the stack we have to work with (66 bytes) we will be
 
 3. Once we have the call Instruction Located, we can jump to it, and set a breakpoint. This way we can extract the Address of the `recv(...)` call. Alternatively we could use the [Arwin](https://github.com/xinwenfu/arwin) program to do this.
 
-	<img src="Videos/FindRECV.gif" width=600>
+	https://github.com/DaintyJet/VChat_KSTET_Multi/assets/60448620/4529afeb-3c8b-45b9-99db-0d23c75727de
 
 	1. Goto the Call Address  
 
@@ -394,7 +394,7 @@ Due to the limited space on the stack we have to work with (66 bytes) we will be
 #### Staging
 1. Now we can add our first stage shell code to the [exploit5.py](./SourceCode/exploit5.py), we can then set a breakpoint at the `jmp esp` instruction we chose earlier and ensure that it works properly!
 
-	<img src="Videos/Exploit5.gif" width=600>
+	https://github.com/DaintyJet/VChat_KSTET_Multi/assets/60448620/88e9ea66-42f0-42b4-ad1b-00e8da714aba
 
 	1. Set a breakpoint at the `jmp esp` instruction 
 
