@@ -21,7 +21,7 @@ This is particularly useful in environments with constraints and limited resourc
 		# Create a the DLL with an 
 		$ gcc.exe -shared -o essfunc.dll -Wl,--out-implib=libessfunc.a -Wl,--image-base=0x62500000 essfunc.o
 		```
-         * ```-shared -o essfunc.dll```: We create a DLL "essefunc.dll", these are equivalent to the [shared library](https://tldp.org/HOWTO/Program-Library-HOWTO/shared-libraries.html) in Linux. 
+         * ```-shared -o essfunc.dll```: We create a DLL "essfunc.dll", these are equivalent to the [shared library](https://tldp.org/HOWTO/Program-Library-HOWTO/shared-libraries.html) in Linux. 
          * ```-Wl,--out-implib=libessfunc.a```: We tell the linker to generate generate a import library "libessfunc".a" [2].
          * ```-Wl,--image-base=0x62500000```: We specify the [Base Address](https://learn.microsoft.com/en-us/cpp/build/reference/base-base-address?view=msvc-170) as ```0x62500000``` [3].
          * ```essfunc.o```: We build the DLL based off of the object file "essfunc.o"
@@ -31,9 +31,9 @@ This is particularly useful in environments with constraints and limited resourc
 		```
          * ```vchat.c```: The source file is "vchat.c"
          * ```-o vchat.exe```: The output file will be the executable "vchat.exe"
-         * ```-lws2_32 ./libessfunc.a```: Link the executable against the import library "libessfunc.a", enabling it to use the DLL "essefunc.dll"
+         * ```-lws2_32 ./libessfunc.a```: Link the executable against the import library "libessfunc.a", enabling it to use the DLL "essfunc.dll"
    2. Launch the VChat application 
-		* Click on the Icon in File Explorer when it is in the same directory as the essefunc dll
+		* Click on the Icon in File Explorer when it is in the same directory as the essfunc dll
 2. **Linux**: Run NMap
 	```sh
 	# Replace the <IP> with the IP of the machine.
@@ -215,7 +215,7 @@ SPIKE is a C based fuzzing tool that is commonly used by professionals, it is av
 
 	<img src="Images/I15.png" width=600>
 
-      * We can see there are nine possible `jmp esp` instructions in the essefunc dll that we can use, any should work. We will use the last one `0x625014E6`
+      * We can see there are nine possible `jmp esp` instructions in the essfunc dll that we can use, any should work. We will use the last one `0x625014E6`
 8. Use a program like [exploit3.py](./SourceCode/exploit3.py) to verify that this works.
 	
 	https://github.com/DaintyJet/VChat_KSTET_Multi/assets/60448620/1a188006-7304-4b1a-bc47-b651c4c8767b
@@ -232,7 +232,7 @@ SPIKE is a C based fuzzing tool that is commonly used by professionals, it is av
 
 		<img src="Images/I18.png" width=600>
 
-         * Notice that the EIP now points to an essefunc.dll address!
+         * Notice that the EIP now points to an essfunc.dll address!
 	4. Once the overflow occurs click the *step into* button highlighted below 
 
 		<img src="Images/I19.png" width=600>
@@ -430,6 +430,16 @@ Due to the limited space on the stack we have to work with (66 bytes) we will be
 
 	* Sometimes this took a few times to work.
 
+*Note*: Be sure to run the [netcat](https://linux.die.net/man/1/nc) listener on our Kali machine for port 8080 while running [exploit6.py](./SourceCode/exploit6.py)
+
+```
+$ nc -l -v -p 8080
+```
+* `nc`: The netcat command
+* `-l`: Set netcat to listen for connections 
+* `v`: Verbose output 
+* `p`: Set to listen on a port, in this case port 8080.
+
 
 When the exploit does work, you will need to exit out of the `cmd` window manually, otherwise you will experience socket bind errors as shown below.
 
@@ -500,7 +510,7 @@ Next we configure the stack for a call to the `recv(...)` function; Remember tha
 
 
 ## Test code
-1. [exploit0.py](./SourceCode/exploit0.py): Sending 100 `A`s to crash the server
+1. [exploit0.py](./SourceCode/exploit0.py): Sending 100 `A`s to crash the server.
 2. [exploit1.py](./SourceCode/exploit1.py): Sending a cyclic pattern of chars to identify the offset that we need to inject to control EIP.
 3. [exploit2.py](./SourceCode/exploit2.py): Sending 66 `A`s followed by 4 `B`s to verify the offset we discovered from the Cyclic Group
 4. [exploit3.py](./SourceCode/exploit3.py): Replacing the bytes at the offset discovered by exploit1.py with the address of an *JMP ESP* instruction.
