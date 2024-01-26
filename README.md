@@ -1,4 +1,4 @@
-# VChat KSTET Exploitation: Multistage Exploitations
+# VChat KSTET Exploit: Multistage Exploitations
 
 *Notice*: The following exploit, and its procedures are based on the original [Blog](https://fluidattacks.com/blog/vulnserver-kstet/)
 ___
@@ -339,7 +339,7 @@ Due to the limited space on the stack we have to work with (66 bytes) we will be
 		<img src="Images/I30.png" width=600>
 
 		* The File Descriptor used for the socket can also be extracted, however this is essentially a random number from call to call, so we cannot rely on this from exploit to exploit. So the Socket Handle information is not that useful in this case.
-4. Use the following shell code from the [blog]() provided by fluid attacks
+4. Use the following shell code from the [blog](https://fluidattacks.com/blog/vulnserver-kstet/) provided by fluid attacks
 	```
 	sub esp,0x64            ; Move ESP pointer above our initial buffer to avoid
 							; overwriting our shellcode
