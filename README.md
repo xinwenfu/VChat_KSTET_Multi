@@ -8,6 +8,7 @@ This exploit will use the technique of [Multi-Stage Exploits](https://attack.mit
 <!-- Reword and Verify -->
 This is particularly useful in environments with constraints and limited resources available the the attacker within the application or service that is being attacked. This also in some cases allows attacker to gain further access into a system from say a phishing attack which first deploys a malicious applications, or injects shellcode into a process that later deploys a second stage allowing for greater access to the system.
 
+**Notice**: Please setup the Windows and Linux systems as described in [SystemSetup](./SystemSetup/README.md)!
 ## Exploitation
 ### PreExploitation
 1. **Windows**: Setup Vchat
