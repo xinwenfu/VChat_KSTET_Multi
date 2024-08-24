@@ -39,7 +39,7 @@ Compile VChat and its dependencies if they have not already been compiled. This 
 	$ gcc.exe -shared -o essfunc.dll -Wl,--out-implib=libessfunc.a -Wl,--image-base=0x62500000 essfunc.o
 	```
       * ```-shared -o essfunc.dll```: We create a DLL "essfunc.dll"; these are equivalent to the [shared library](https://tldp.org/HOWTO/Program-Library-HOWTO/shared-libraries.html) in Linux.
-      * ```-Wl,--out-implib=libessfunc.a```: We tell the linker to generate generate a import library "libessfunc.a" [2].
+      * ```-Wl,--out-implib=libessfunc.a```: We tell the linker to generate a import library "libessfunc.a" [2].
       * ```-Wl,--image-base=0x62500000```: We specify the [Base Address](https://learn.microsoft.com/en-us/cpp/build/reference/base-base-address?view=msvc-170) as ```0x62500000``` [3].
       * ```essfunc.o```: We build the DLL based off of the object file "essfunc.o"
 3. Compile the VChat application.
