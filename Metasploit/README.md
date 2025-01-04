@@ -28,7 +28,7 @@ $ sudo mousepad /usr/share/metasploit-framework/modules/exploit/windows/vchat/KS
 
 When we start the Metasploit console with the `msfconsole` command it should load the modules in the `/usr/share/metasploit-framework/modules` directory and subdirectories. However to be safe, as the server could have already been started we can use the `reload_all` command to reload all modules.
 
-1. Starting `msfconsole` 
+1. Starting `msfconsole`
 
     <img src="Images/MSFStart.png">
 
@@ -36,9 +36,9 @@ When we start the Metasploit console with the `msfconsole` command it should loa
 
     <img src="Images/MSFReload.png">
 
-Once the modules are loaded we can then use the [`search`](https://www.offsec.com/metasploit-unleashed/msfconsole-commands/#search) command to find the modules of interest. This looks for patterns in the path to the module, the description and other attributes. You can look at the other options with the `-h` flag. 
+Once the modules are loaded we can then use the [`search`](https://www.offsec.com/metasploit-unleashed/msfconsole-commands/#search) command to find the modules of interest. This looks for patterns in the path to the module, the description and other attributes. You can look at the other options with the `-h` flag.
 
-<img src="Images/MSFSearch.png"> 
+<img src="Images/MSFSearch.png">
 
 
 Then we can select the `KSTET_MULTI` module with the [`use`](https://www.offsec.com/metasploit-unleashed/msfconsole-commands/#use) command followed by the index of the module we want to use. In my case this was `3`.
