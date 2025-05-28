@@ -391,6 +391,7 @@ socket_loop:            ; Brute Force Loop Label
 							; EDI will be increased to check the next socket handle
 ```
 
+The stack looks like the one below right before STAGE1 runns. *recv()* in STAGE1 will put the received STAGE2 above STAGE1, somewhere in *b'A' * (58 - 8 - len(STAGE1))*.
 ```
          |----------------------------------|
          | b'C' * (24)                      |
